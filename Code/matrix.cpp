@@ -4,9 +4,10 @@
 Matrix(int** matrix_in, int width, int height) {}
 ~Matrix() {}
 
-static void Matrix::kernel(Matrix* matrix, BMP* source, int x, int y) {}
+static RGBAPixel*  Matrix::kernel(Matrix* matrix, BMP* source, int x, int y) {}
 
 static BMP* Matrix::convolution(Matrix* matrix, BMP* source) {
+  //Make output canvas
   BMP output;
 
   //Get dimensions fom source
@@ -15,18 +16,28 @@ static BMP* Matrix::convolution(Matrix* matrix, BMP* source) {
 
   source.SetSize( picWidth , picHeight); 
   //set outputs bit depth to 24 since we're using RGB 8bit+8bit+8bit=24bit
-  Output.SetBitDepth(24); 
+  output.SetBitDepth(24); 
 
-   for (int i = 1; i < picWidth-1; ++i)
+   for (int i = 0; i < picWidth-1; ++i)
    {
-     for (int j = 1; j < picHeight-1; ++j) 
+     for (int j = 0; j < picHeight-1; ++j) 
      { 
+        //Get RGBA value from kernel function
+        RGBAPixel kernelReturn;
+        kernelReturn = kernel(matrix,source,i,j);
 
-        kerna
+        output(i,j)->Red = kernelReturn->Red;
+        output(i,j)->Green = kernelReturn->Green;
+        output(i,j)->Blue = kernelReturn->Blue;
 
      } 
 
    } //end for
+ 
+    //Return the final BMP
+
+   return output;
+   //Output.WriteToFile("output.BMP"); 
 
 
 }
