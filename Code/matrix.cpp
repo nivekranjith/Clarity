@@ -1,23 +1,48 @@
 #include "EasyBMP/EasyBMP.h"
 #include "matrix.h"
 
-Matrix::Matrix(int** matrix_in, int wid, int hei) {
-  matrix = matrix_in;
+Matrix::Matrix(int **matrix_in, int wid, int hei, int div) {
+  mat = matrix_in;
   width = wid;
   height = hei;
+  divisor = div;
 }
 
 Matrix::~Matrix() {
-  //Delete matrix**
-  for(int i=0; i < width; ++i) {
-    delete matrix[i];
+  for (int i=0; i<width; i++) {
+    delete mat[i];
   }
-  delete matrix;
+  delete mat;
+}
+
+//From Mark Ransom at http://codereview.stackexchange.com/questions/6502/fastest-way-to-clamp-an-integer-to-the-range-0-255
+inline
+int fastClamp(int n)
+{
+    n &= -(n >= 0);
+    return n | ((255 - n) >> 31);
 }
 
 RGBApixel* Matrix::kernel(Matrix* matrix, BMP* source, int x, int y) {
+  RGBApixel* out = new RGBApixel();
+  //Need to use temporary variables because result of kernel may exceed 255 or go below 0.
+  int Red = 0;
+  int Green = 0;
+  int Blue = 0;
+  int border = (matrix->width-1)/2;
+  for(int i = -border; i<=border; i++) {
+    for(int j = -border; j<=border; j++) {
+      Red = Red + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Red * matrix->mat[i+1][j+1];
+      Blue = Blue + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Blue * matrix->mat[i+1][j+1];
+      Green = Green + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Green * matrix->mat[i+1][j+1];
+    }
+  }
+
+  out->Red = fastClamp(Red/matrix->divisor); //divide by divisor
+  out->Blue = fastClamp(Blue/matrix->divisor);
+  out->Green = fastClamp(Green/matrix->divisor);
   //Dummy for now
-  return edge_extrapolate_pixel(source,x,y);
+  out ;
 }
 void Matrix::edge_extrapolate_source(BMP* source) {}
 
@@ -40,14 +65,15 @@ BMP* Matrix::convolution(Matrix* matrix, BMP* source) {
    {
      for (int j = 0; j < picHeight; ++j) 
      { 
+       
         //Get RGBA value from kernel function
         RGBApixel* kernelReturn;
         kernelReturn = kernel(matrix,source,i,j);
-
         (*output)(i,j)->Red = kernelReturn->Red;
         (*output)(i,j)->Green = kernelReturn->Green;
         (*output)(i,j)->Blue = kernelReturn->Blue;
 
+	delete kernelReturn;
      } 
 
    } //end for
@@ -72,20 +98,20 @@ RGBApixel* Matrix::edge_extrapolate_pixel(BMP* source, int x, int y) {
 	return (*source)(0,0);
       }
       //Bottom-left
-      if (y>(*source).TellHeight()) {
+      if (y>=(*source).TellHeight()) {
 	return (*source)(0,(*source).TellHeight()-1);
       }
       //Left side somewhere
       return (*source)(0,y);
     }
     //On the right
-    if (x>(*source).TellWidth()) {
+    if (x>=(*source).TellWidth()) {
       //Top-right
       if (y<0) {
 	return (*source)(source->TellWidth()-1,0);
       }
       //Bottom-right
-      if (y>source->TellHeight()) {
+      if (y>=source->TellHeight()) {
 	return (*source)(source->TellWidth()-1,source->TellHeight()-1);
       }
       //Right side somewhere

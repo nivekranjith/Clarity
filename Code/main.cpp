@@ -9,8 +9,8 @@ int main( int argc, char* argv[] )
   Background->ReadFromFile(argv[1]); 
 
   //Create Matrix
-  int rows = 3;
-  int cols = 3;
+  int rows = 5;
+  int cols = 5;
   int** kern = new int*[rows];
   for(int i=0; i < rows; ++i) {
     kern[i] = new int[cols];
@@ -19,10 +19,14 @@ int main( int argc, char* argv[] )
     }
   }
   //Let's try a "identity" matrix
-  kern[1][1] = 1;
- 
+  kern[0][0] = 1; kern[0][1] = 4; kern[0][2] = 6; kern[0][3] = 4; kern[0][4] = 1;
+  kern[1][0] = 4; kern[1][1] = 16; kern[1][2] = 24; kern[1][3] = 16; kern[1][4] = 4;
+  kern[2][0] = 6; kern[2][1] = 24; kern[2][2] = 36; kern[2][3] = 24; kern[2][4] = 6;
+  kern[3][0] = 4; kern[1][1] = 16; kern[3][2] = 24; kern[1][3] = 16; kern[3][4] = 4;
+  kern[4][0] = 1; kern[4][1] = 4; kern[4][2] = 6; kern[4][3] = 4; kern[4][4] = 1;
   //Convolution of Background to Output
-  Matrix* mat = new Matrix(kern,rows,cols);
+  //Last parameter is divisor
+  Matrix* mat = new Matrix(kern,rows,cols,256);
   BMP* Output = Matrix::convolution(mat,Background);
   delete mat;
     

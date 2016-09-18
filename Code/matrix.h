@@ -5,11 +5,12 @@
 
 class Matrix {
  public:
-  Matrix(int **matrix_in, int wid, int hei);
+  Matrix(int** matrix_in, int wid, int hei, int divisor);
   ~Matrix();
   int width;
   int height;
-  int** matrix;
+  int** mat;
+  int divisor;
 
   static RGBApixel* kernel(Matrix* matrix, BMP* source, int x, int y);
   static BMP* convolution(Matrix* matrix, BMP* source);
