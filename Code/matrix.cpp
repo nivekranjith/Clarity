@@ -5,7 +5,7 @@ Matrix(int** matrix_in, int width, int height) {}
 ~Matrix() {}
 
 static void Matrix::kernel(Matrix* matrix, BMP* source, int x, int y) {}
-static RGB* Matrix::convolution(Matrix* matrix, BMP* source) {}
+static BMP* Matrix::convolution(Matrix* matrix, BMP* source) {}
 static void Matrix::edge_extrapolate_source(BMP* source) {}
 static RGBAPixel* Matrix::edge_extrapolate_pixel(BMP* source, int x, int y) {
   if ((x>=0)&&(x<source->tellWidth())&&(y>=0)&&(y<source->tellHeight())) {
