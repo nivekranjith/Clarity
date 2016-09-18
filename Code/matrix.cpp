@@ -5,10 +5,49 @@ Matrix::Matrix(int** matrix_in, int width, int height) {}
 Matrix::~Matrix() {}
 
 RGBApixel* Matrix::kernel(Matrix* matrix, BMP* source, int x, int y) {}
-BMP* Matrix::convolution(Matrix* matrix, BMP* source) {}
 void Matrix::edge_extrapolate_source(BMP* source) {}
+
+//Liam says: I changed output to be a pointer to match definition
+//If we return a normal BMP then it will have to clone the whole image
+//Better to just pass a reference which is quick, no?
+BMP* Matrix::convolution(Matrix* matrix, BMP* source) {
+  //Make output canvas
+  BMP* output = new BMP();
+
+  //Get dimensions fom source
+  int picWidth = source->TellWidth(); 
+  int picHeight = source->TellHeight(); 
+
+  output->SetSize( picWidth , picHeight); 
+  //set outputs bit depth to 24 since we're using RGB 8bit+8bit+8bit=24bit
+  output->SetBitDepth(24); 
+
+   for (int i = 0; i < picWidth; ++i)
+   {
+     for (int j = 0; j < picHeight; ++j) 
+     { 
+        //Get RGBA value from kernel function
+        RGBApixel* kernelReturn;
+        kernelReturn = kernel(matrix,source,i,j);
+
+        (*output)(i,j)->Red = kernelReturn->Red;
+        (*output)(i,j)->Green = kernelReturn->Green;
+        (*output)(i,j)->Blue = kernelReturn->Blue;
+
+     } 
+
+   } //end for
+ 
+    //Return the final BMP
+
+   return output;
+   //Output.WriteToFile("output.BMP"); 
+
+
+}
+
 RGBApixel* Matrix::edge_extrapolate_pixel(BMP* source, int x, int y) {
-  if ((x>=0)&&(x<(*source).TellWidth())&&(y>=0)&&(y<(*source).TellHeight())) {
+  if ((x>=0)&&(x<source->TellWidth())&&(y>=0)&&(y<source->TellHeight())) {
     return (*source)(x,y);
   }
   else {
