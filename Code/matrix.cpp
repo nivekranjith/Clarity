@@ -1,10 +1,24 @@
 #include "EasyBMP/EasyBMP.h"
 #include "matrix.h"
 
-Matrix::Matrix(int** matrix_in, int width, int height) {}
-Matrix::~Matrix() {}
+Matrix::Matrix(int** matrix_in, int wid, int hei) {
+  matrix = matrix_in;
+  width = wid;
+  height = hei;
+}
 
-RGBApixel* Matrix::kernel(Matrix* matrix, BMP* source, int x, int y) {}
+Matrix::~Matrix() {
+  //Delete matrix**
+  for(int i=0; i < width; ++i) {
+    delete matrix[i];
+  }
+  delete matrix;
+}
+
+RGBApixel* Matrix::kernel(Matrix* matrix, BMP* source, int x, int y) {
+  //Dummy for now
+  return edge_extrapolate_pixel(source,x,y);
+}
 void Matrix::edge_extrapolate_source(BMP* source) {}
 
 //Liam says: I changed output to be a pointer to match definition

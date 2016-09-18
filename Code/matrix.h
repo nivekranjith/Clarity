@@ -5,7 +5,7 @@
 
 class Matrix {
  public:
-  Matrix(int **matrix_in, int width, int height);
+  Matrix(int **matrix_in, int wid, int hei);
   ~Matrix();
   int width;
   int height;
