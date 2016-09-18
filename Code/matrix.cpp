@@ -14,7 +14,7 @@ static BMP* Matrix::convolution(Matrix* matrix, BMP* source) {
   int picWidth = source.TellWidth(); 
   int picHeight = source.TellHeight(); 
 
-  source.SetSize( picWidth , picHeight); 
+  output.SetSize( picWidth , picHeight); 
   //set outputs bit depth to 24 since we're using RGB 8bit+8bit+8bit=24bit
   output.SetBitDepth(24); 
 
