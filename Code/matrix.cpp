@@ -5,7 +5,32 @@ Matrix(int** matrix_in, int width, int height) {}
 ~Matrix() {}
 
 static void Matrix::kernel(Matrix* matrix, BMP* source, int x, int y) {}
-static BMP* Matrix::convolution(Matrix* matrix, BMP* source) {}
+
+static BMP* Matrix::convolution(Matrix* matrix, BMP* source) {
+  BMP output;
+
+  //Get dimensions fom source
+  int picWidth = source.TellWidth(); 
+  int picHeight = source.TellHeight(); 
+
+  source.SetSize( picWidth , picHeight); 
+  //set outputs bit depth to 24 since we're using RGB 8bit+8bit+8bit=24bit
+  Output.SetBitDepth(24); 
+
+   for (int i = 1; i < picWidth-1; ++i)
+   {
+     for (int j = 1; j < picHeight-1; ++j) 
+     { 
+
+        kerna
+
+     } 
+
+   } //end for
+
+
+}
+
 static void Matrix::edge_extrapolate_source(BMP* source) {}
 static RGBAPixel* Matrix::edge_extrapolate_pixel(BMP* source, int x, int y) {
   if ((x>=0)&&(x<source->tellWidth())&&(y>=0)&&(y<source->tellHeight())) {
