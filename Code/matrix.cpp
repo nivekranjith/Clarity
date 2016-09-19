@@ -32,9 +32,9 @@ RGBApixel* Matrix::kernel(Matrix* matrix, BMP* source, int x, int y) {
   int border = (matrix->width-1)/2;
   for(int i = -border; i<=border; i++) {
     for(int j = -border; j<=border; j++) {
-      Red = Red + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Red * matrix->mat[i+1][j+1];
-      Blue = Blue + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Blue * matrix->mat[i+1][j+1];
-      Green = Green + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Green * matrix->mat[i+1][j+1];
+      Red = Red + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Red * matrix->mat[i+border][j+border];
+      Blue = Blue + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Blue * matrix->mat[i+border][j+border];
+      Green = Green + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Green * matrix->mat[i+border][j+border];
     }
   }
 
