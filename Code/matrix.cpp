@@ -1,5 +1,6 @@
 #include "EasyBMP/EasyBMP.h"
 #include "matrix.h"
+#include <omp.h>
 
 Matrix::Matrix(int **matrix_in, int wid, int hei, int div) {
   mat = matrix_in;
@@ -23,6 +24,25 @@ int fastClamp(int n)
     return n | ((255 - n) >> 31);
 }
 
+void Matrix::kernel2(int mat[][7], int div, int width, BMP* source, BMP* output, int x, int y) {
+  //Need to use temporary variables because result of kernel may exceed 255 or go below 0.
+  int Red = 0;
+  int Green = 0;
+  int Blue = 0;
+  int border = (width-1)/2;
+  for(int i = -border; i<=border; i++) {
+    for(int j = -border; j<=border; j++) {
+      Red = Red + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Red * mat[i+border][j+border];
+      Blue = Blue + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Blue * mat[i+border][j+border];
+      Green = Green + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Green * mat[i+border][j+border];
+    }
+  }
+
+  (*output)(x,y)->Red = Red/div; //divide by divisor
+  (*output)(x,y)->Blue = Blue/div;
+  (*output)(x,y)->Green = Green/div;
+}
+
 RGBApixel* Matrix::kernel(Matrix* matrix, BMP* source, int x, int y) {
   RGBApixel* out = new RGBApixel();
   //Need to use temporary variables because result of kernel may exceed 255 or go below 0.
@@ -44,6 +64,7 @@ RGBApixel* Matrix::kernel(Matrix* matrix, BMP* source, int x, int y) {
   //Dummy for now
   out ;
 }
+
 void Matrix::edge_extrapolate_source(BMP* source) {}
 
 //Liam says: I changed output to be a pointer to match definition
@@ -75,7 +96,6 @@ BMP* Matrix::convolution(Matrix* matrix, BMP* source) {
 
 	delete kernelReturn;
      } 
-
    } //end for
  
     //Return the final BMP
@@ -83,7 +103,41 @@ BMP* Matrix::convolution(Matrix* matrix, BMP* source) {
    return output;
    //Output.WriteToFile("output.BMP"); 
 
+}
 
+BMP* Matrix::convolution_parallel(Matrix* matrix, BMP* source, int n) {
+  int tempmat[7][7];
+  for (int l=0; l<matrix->width; l++) {
+    for (int o=0; o<matrix->height; o++) {
+      tempmat[l][o] = matrix->mat[l][o];
+    }
+  }
+  //Make output canvas
+  BMP* output = new BMP();
+
+  //Get dimensions fom source
+  int picWidth = source->TellWidth(); 
+  int picHeight = source->TellHeight(); 
+
+  output->SetSize(picWidth, picHeight); 
+  //set outputs bit depth to 24 since we're using RGB 8bit+8bit+8bit=24bit
+  output->SetBitDepth(24);
+
+  int i, j, k;
+  int width = matrix->width;
+  int div = matrix->divisor;
+  omp_set_num_threads(n);
+#pragma omp parallel for schedule(guided,matrix->width*2), private(k), firstprivate(tempmat,width,div), shared(source,output)
+  for (i=0; i<picWidth; i++) {
+    //j=((i%n)*(picWidth/n))+(i/n);
+    for (k=0; k<picHeight; k++) {
+      //if (k==0) printf("hi %d\n",i);
+      kernel2(tempmat,div,width,source,output,i,k);
+    }
+  }
+
+  return output;
+  //Output.WriteToFile("output.BMP"); 
 }
 
 RGBApixel* Matrix::edge_extrapolate_pixel(BMP* source, int x, int y) {

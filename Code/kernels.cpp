@@ -21,9 +21,35 @@ Matrix* Kernels::genMatrix(int size, std::string type) {
       kern[1][0] = 1; kern[1][1] = 1; kern[1][2] = 1; 
       kern[2][0] = 1; kern[2][1] = 1; kern[2][2] = 1;
     }
+    if (type=="slight_blur") {
+      divisor=9;
+      kern[0][0] = 0; kern[0][1] = 1; kern[0][2] = 0;
+      kern[1][0] = 1; kern[1][1] = 5; kern[1][2] = 1; 
+      kern[2][0] = 0; kern[2][1] = 1; kern[2][2] = 0;
+    }
+    if (type=="noise") {
+      divisor=1;
+      kern[0][0] = 0; kern[0][1] = -1; kern[0][2] = 0;
+      kern[1][0] = -1; kern[1][1] = 4; kern[1][2] = -1; 
+      kern[2][0] = 0; kern[2][1] = -1; kern[2][2] = 0;
+    }
+    if (type=="slight_sharpen") {
+      divisor=16;
+      kern[0][0] = 0; kern[0][1] = -1; kern[0][2] = 0;
+      kern[1][0] = -1; kern[1][1] = 20; kern[1][2] = -1; 
+      kern[2][0] = 0; kern[2][1] = -1; kern[2][2] = 0;
+    }
   }
   if (size==5) {
     if (type=="gaussian_blur") {
+      divisor=256;
+      kern[0][0] = 1; kern[0][1] = 4; kern[0][2] = 6; kern[0][3] = 4; kern[0][4] = 1;
+      kern[1][0] = 4; kern[1][1] = 16; kern[1][2] = 24; kern[1][3] = 16; kern[1][4] = 4;
+      kern[2][0] = 6; kern[2][1] = 24; kern[2][2] = 36; kern[2][3] = 24; kern[2][4] = 6;
+      kern[3][0] = 4; kern[1][1] = 16; kern[3][2] = 24; kern[1][3] = 16; kern[3][4] = 4;
+      kern[4][0] = 1; kern[4][1] = 4; kern[4][2] = 6; kern[4][3] = 4; kern[4][4] = 1;
+    }
+    if (type=="gaussian_blur2") {
       divisor=256;
       kern[0][0] = 1; kern[0][1] = 4; kern[0][2] = 6; kern[0][3] = 4; kern[0][4] = 1;
       kern[1][0] = 4; kern[1][1] = 16; kern[1][2] = 24; kern[1][3] = 16; kern[1][4] = 4;
@@ -38,6 +64,14 @@ Matrix* Kernels::genMatrix(int size, std::string type) {
       kern[2][0] = 1; kern[2][1] = 1; kern[2][2] = 1; kern[2][3] = 1; kern[2][4] = 1;
       kern[3][0] = 1; kern[1][1] = 1; kern[3][2] = 1; kern[1][3] = 1; kern[3][4] = 1;
       kern[4][0] = 1; kern[4][1] = 1; kern[4][2] = 1; kern[4][3] = 1; kern[4][4] = 1;
+    }
+    if (type=="sharpen") {
+      divisor=8;
+      kern[0][0] = -1; kern[0][1] = -1; kern[0][2] = -1; kern[0][3] = -1; kern[0][4] = -1;
+      kern[1][0] = -1; kern[1][1] = 2; kern[1][2] = 2; kern[1][3] = 2; kern[1][4] = -1;
+      kern[2][0] = -1; kern[2][1] = 2; kern[2][2] = 8; kern[2][3] = 2; kern[2][4] = -1;
+      kern[3][0] = -1; kern[1][1] = 2; kern[3][2] = 2; kern[1][3] = 2; kern[3][4] = -1;
+      kern[4][0] = -1; kern[4][1] = -1; kern[4][2] = -1; kern[4][3] = -1; kern[4][4] = -1;
     }
   }
   return new Matrix(kern,size,size,divisor);
