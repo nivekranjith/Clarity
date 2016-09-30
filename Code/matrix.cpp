@@ -65,6 +65,25 @@ RGBApixel* Matrix::kernel(Matrix* matrix, BMP* source, int x, int y) {
   out ;
 }
 
+void Matrix::kernel3(Matrix* matrix, BMP* source, BMP* output, int x, int y) {
+  //Need to use temporary variables because result of kernel may exceed 255 or go below 0.
+  int Red = 0;
+  int Green = 0;
+  int Blue = 0;
+  int border = (matrix->width-1)/2;
+  for(int i = -border; i<=border; i++) {
+    for(int j = -border; j<=border; j++) {
+      Red = Red + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Red * matrix->mat[i+border][j+border];
+      Blue = Blue + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Blue * matrix->mat[i+border][j+border];
+      Green = Green + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Green * matrix->mat[i+border][j+border];
+    }
+  }
+
+  (*output)(x,y)->Red = fastClamp(Red/matrix->divisor); //divide by divisor
+  (*output)(x,y)->Blue = fastClamp(Blue/matrix->divisor);
+  (*output)(x,y)->Green = fastClamp(Green/matrix->divisor);
+}
+
 void Matrix::edge_extrapolate_source(BMP* source) {}
 
 //Liam says: I changed output to be a pointer to match definition
@@ -86,15 +105,7 @@ BMP* Matrix::convolution(Matrix* matrix, BMP* source) {
    {
      for (int j = 0; j < picHeight; ++j) 
      { 
-       
-        //Get RGBA value from kernel function
-        RGBApixel* kernelReturn;
-        kernelReturn = kernel(matrix,source,i,j);
-        (*output)(i,j)->Red = kernelReturn->Red;
-        (*output)(i,j)->Green = kernelReturn->Green;
-        (*output)(i,j)->Blue = kernelReturn->Blue;
-
-	delete kernelReturn;
+        kernel3(matrix,source,output,i,j);
      } 
    } //end for
  

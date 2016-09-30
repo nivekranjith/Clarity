@@ -74,7 +74,31 @@
 \subsection{Background Theory}
 
 \section{Solution technicalities}
+\subsection{Serial Implementation}
+\subsection{Parallel Implementation}
+The parallel implementation differs from the serial implementation in that instead of the master thread (the serial program) iterating through each pixel, the parallel implementation has several threads going through different pixels at the same time.
 
+This is achieved by use of an omp for loop structure. Each iteration of the outer for loop calculates the kernel for a (image height)x([matrix width]x2) sized block of the image (See diagram x) (Note that the final chunk is truncated to fit with the width of the image).  There are a few reasons for this choice of parallelisation:
+- We want to to keep the number of chunks for threads to process low so as to reduce communication time, but we also want there to be enough chunks so that threads that execute their chunks quickly can do something useful while waiting for other threads.
+- We want the dimensions of the chunks to minimize potential contention between threads, specifically when we are calculating the kernel for two seperate pixels which are in kernel dimension range (this would result in both the kernel calculations needing to contend for the same pixels for their own calculation, see diagram x). Assuming the image is reasonably sized, using (matrix width)*2 width chunks will nearly always keep the kernel calculations far enough away from each other at each moment of execution, even when one thread is running faster than the others. For a 5x5 kernel, a thread would have to have done more than 5 columns of the image before one thread had done a single column for there to be contention issues in this regard.
+
+Each thread works column by column. We do not create seperate sub images for each thread to use for source and output because it would require splitting overhead at the beginning and joining overhead at the end. It is mentioned in the EasyBMP documentation (Reference) that the pixel data is stored internally as a 2d array. We also know that this must be stored on the heap, since it has to do deal with varying sized images (and thus, varying sized 2d arrays). What we don't know is whether the image is stored row first or column first. 
+
+It is thus also difficult to say what contention issues might arise in the current implementation, specifically the contention that arises when threads read from the same source image in memory at approximately the same time, and write to the same output image at approximately the same time. Will contention on the cache line arise from reading the same row, or the same column?
+
+It is important to note however that the above scenario is not likely to occur often for the duration of the image convolution processing. Threads, operating on identically sized chunks of the image (excluding the final chunk), will likely take different times to finish, and will be at different stages of their chunk with respect to other threads at most moments of execution. This is mainly because of the uncertain scheduling of the operating system, but also because there are slight differences in the complexity of the calculations for various chunks.
+
+Specifically, the chunk at the beginning will invlolve calculations that extend out the left side of the image, resulting in different processing inside the edge extrapolation function than a chunk not on the side, ultimatelly resulting in differing execution times for the threads. This will slightly desync the left (or alternatively the right) thread with the other thread with respect to the chunks.
+
+Suppose the threads were perfectly scheduled, i.e. whenever a thread is being executed every other thread is also being executed. Also ignoring the point in the paragraph above - the threads would all do their calculation in complete synchronization. I.e. they would all work on pixels in the same row but in differnet columns at the same time before progressing to the next row, etc. So the row is in sync.
+
+Now suppose that the pixels are stored row first - i.e. one thread would have to wait for the other thread to finish storing it's pixel before it can store it's own pixel. Then the two threads will become desynced with respect to that row in the image. But if the two threads now continue to do their calculations, they will not likely run into that contention again because they will be likely operating on seperate rows at each step from then on (they will, by design, be operating on different columns).
+
+Thus, although initial contention here is quite possible, it will not likely be a recurring issue as a result of the threads being continually desynced from another with respect to row and column in the image. Note that rows may become resynced (briefly) during the execution of the program as a result of some rows already being in shared cache due to leading threads having fetched them for their calculation - the leading thread will be slowed down as a result of having to be the thread that fetches the rows from RAM all the time and the other threads will catch up. This is obviously hardware dependent.
+
+If infact the image is stored column first however, then there really is no source of contention here at all since each thread is only accessed and written to by one thread at a time. Infact, since the threads work column by column, this could very well result in whole columns being in cache for each thread, thus reducing waiting time for tht columns processing and the image as a whole.
+
+In any case, there IS a marked speed improvement with our parallel implementation as will be seen momentarily.
 \section{Results analysis}
 
 \section{Conclusion}
