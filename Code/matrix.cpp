@@ -123,16 +123,20 @@ BMP* Matrix::convolution_parallel(Matrix* matrix, BMP* source, int n) {
   //set outputs bit depth to 24 since we're using RGB 8bit+8bit+8bit=24bit
   output->SetBitDepth(24);
 
-  int i, j, k;
+  int i, j, k, max;
   int width = matrix->width;
   int div = matrix->divisor;
   omp_set_num_threads(n);
-#pragma omp parallel for schedule(guided,matrix->width*2), private(k), firstprivate(tempmat,width,div), shared(source,output)
-  for (i=0; i<picWidth; i++) {
+#pragma omp parallel for schedule(dynamic,1), private(k,i,max), firstprivate(tempmat,width,div,picWidth), shared(source,output)
+  for (j=0; j<picWidth/(width*2); j++) {
+    if ((j+1)*width*2>picWidth) max = picWidth;
+    else max = (j+1)*width*2;
+    for (i=j*width*2; i<max; i++) {
     //j=((i%n)*(picWidth/n))+(i/n);
-    for (k=0; k<picHeight; k++) {
-      //if (k==0) printf("hi %d\n",i);
-      kernel2(tempmat,div,width,source,output,i,k);
+      for (k=0; k<picHeight; k++) {
+	//if (k==0) printf("hi %d\n",i);
+	kernel2(tempmat,div,width,source,output,i,k);
+      }
     }
   }
 
