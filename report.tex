@@ -75,6 +75,15 @@
 
 \section{Solution technicalities}
 \subsection{Serial Implementation}
+The serial implementation works as follows:
+ - An image is loaded into memory (a pointer to BMP).
+ - The matrix structure is created (we've made a few standard 5x5 and 3x3 matrices).
+ - The covolution function is called.
+ - The convolution function makes a blank output BMP* structure with the same dimensions as the source image for storing the calculated pixels. 
+ - The covolution function calls the kernel function for each pixel, using two nested for loops.
+ - The kernel function calculates the kernel for a pixel using the edge extrapolation function, the matrix sturucture, and the source image. The final calculation for the pixel is stored in the output BMP* structure directly for speed.
+ - Once the whole covolution is complete, the program writes a new file with the filtered image.
+ 
 \subsection{Parallel Implementation}
 The parallel implementation differs from the serial implementation in that instead of the master thread (the serial program) iterating through each pixel, the parallel implementation has several threads going through different pixels at the same time.
 
