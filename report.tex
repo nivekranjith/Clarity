@@ -24,7 +24,10 @@
 \usepackage[english]{babel} % English language/hyphenation
 \usepackage{amsmath,amsfonts,amsthm} % Math packages
 \usepackage{graphicx}
-\graphicspath{ {images/} }
+\usepackage{float}
+%\usepackage{cite}
+%\usepackage[backend=bibtex]{biblatex}
+\graphicspath{ {} }
 \usepackage{lipsum} % Used for inserting dummy 'Lorem ipsum' text into the template
 
 \usepackage{sectsty} % Allows customizing section commands
@@ -44,7 +47,7 @@
 \numberwithin{figure}{section} % Number figures within sections (i.e. 1.1, 1.2, 2.1, 2.2 instead of 1, 2, 3, 4)
 \numberwithin{table}{section} % Number tables within sections (i.e. 1.1, 1.2, 2.1, 2.2 instead of 1, 2, 3, 4)
 
-\setlength\parindent{0pt} % Removes all indentation from paragraphs - comment this line for an assignment with lots of text
+%\setlength\parindent{0pt} % Removes all indentation from paragraphs - comment this line for an assignment with lots of text
 
 %----------------------------------------------------------------------------------------
 %	TITLE SECTION
@@ -76,38 +79,52 @@
 \section{Solution technicalities}
 \subsection{Serial Implementation}
 The serial implementation works as follows:
- - An image is loaded into memory (a pointer to BMP).
- - The matrix structure is created (we've made a few standard 5x5 and 3x3 matrices).
- - The covolution function is called.
- - The convolution function makes a blank output BMP* structure with the same dimensions as the source image for storing the calculated pixels. 
- - The covolution function calls the kernel function for each pixel, using two nested for loops.
- - The kernel function calculates the kernel for a pixel using the edge extrapolation function, the matrix sturucture, and the source image. The final calculation for the pixel is stored in the output BMP* structure directly for speed.
- - Once the whole covolution is complete, the program writes a new file with the filtered image.
- 
+\begin{enumerate}
+\item An image is loaded into memory (a pointer to BMP).
+\item The matrix structure is created (we've made a few standard 5x5 and 3x3 matrices).
+\item The covolution function is called.
+\item The convolution function makes a blank output BMP* structure with the same dimensions as the source image for storing the calculated pixels. 
+\item The covolution function calls the kernel function for each pixel, using two nested for loops.
+\item The kernel function calculates the kernel for a pixel using the edge extrapolation function, the matrix sturucture, and the source image. The final calculation for the pixel is stored in the output BMP* structure directly for speed.
+\item Once the whole covolution is complete, the program writes a new file with the filtered image.
+\end{enumerate}
+  
 \subsection{Parallel Implementation}
 The parallel implementation differs from the serial implementation in that instead of the master thread (the serial program) iterating through each pixel, the parallel implementation has several threads going through different pixels at the same time.
 
-This is achieved by use of an omp for loop structure. Each iteration of the outer for loop calculates the kernel for a (image height)x([matrix width]x2) sized block of the image (See diagram x) (Note that the final chunk is truncated to fit with the width of the image).  There are a few reasons for this choice of parallelisation:
-- We want to to keep the number of chunks for threads to process low so as to reduce communication time, but we also want there to be enough chunks so that threads that execute their chunks quickly can do something useful while waiting for other threads.
-- We want the dimensions of the chunks to minimize potential contention between threads, specifically when we are calculating the kernel for two seperate pixels which are in kernel dimension range (this would result in both the kernel calculations needing to contend for the same pixels for their own calculation, see diagram x). Assuming the image is reasonably sized, using (matrix width)*2 width chunks will nearly always keep the kernel calculations far enough away from each other at each moment of execution, even when one thread is running faster than the others. For a 5x5 kernel, a thread would have to have done more than 5 columns of the image before one thread had done a single column for there to be contention issues in this regard.
+This is achieved by use of an omp for loop structure. We use dynamic scheduling to accomodate for potential differences in complexity in regions of the image. Each iteration of the outer for loop calculates the kernel for a (image height)x([matrix width]x2) sized chunk of the image (See figure \ref{chunks}) (Note that the final chunk is truncated to fit with the width of the image).  There are a few reasons for this choice of task decomposition:
 
-Each thread works column by column. We do not create seperate sub images for each thread to use for source and output because it would require splitting overhead at the beginning and joining overhead at the end. It is mentioned in the EasyBMP documentation (Reference) that the pixel data is stored internally as a 2d array. We also know that this must be stored on the heap, since it has to do deal with varying sized images (and thus, varying sized 2d arrays). What we don't know is whether the image is stored row first or column first. 
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.25]{"Chunks"}
+	\caption{The decomposition of the workload of the image into chunks.}
+        \label{chunks}
+\end{figure}
 
-It is thus also difficult to say what contention issues might arise in the current implementation, specifically the contention that arises when threads read from the same source image in memory at approximately the same time, and write to the same output image at approximately the same time. Will contention on the cache line arise from reading the same row, or the same column?
+\begin{itemize}
+\item We want to to keep the number of chunks for threads to process low so as to reduce unproductive inter-thread communication time, but we also want there to be enough chunks so that threads that execute their chunks quickly can still have something useful to do while waiting for other threads.
+\item We want the dimensions of the chunks to minimize potential contention between threads, specifically when we are calculating the kernel for two seperate pixels which are in kernel dimension range (this would result in both the kernel calculations needing to contend for the same pixels for their own calculation, see figure \ref{kernels}). Assuming the image is reasonably sized, using (matrix width)*2 width chunks will nearly always keep the kernel calculations far enough away from each other at each moment of execution, even when one thread is running faster than the others. For a 5x5 kernel, a thread would have to have done more than 5 columns of the image before one thread had done a single column for there to be contention issues in this regard.
+\end{itemize}
 
-It is important to note however that the above scenario is not likely to occur often for the duration of the image convolution processing. Threads, operating on identically sized chunks of the image (excluding the final chunk), will likely take different times to finish, and will be at different stages of their chunk with respect to other threads at most moments of execution. This is mainly because of the uncertain scheduling of the operating system, but also because there are slight differences in the complexity of the calculations for various chunks.
 
-Specifically, the chunk at the beginning will invlolve calculations that extend out the left side of the image, resulting in different processing inside the edge extrapolation function than a chunk not on the side, ultimatelly resulting in differing execution times for the threads. This will slightly desync the left (or alternatively the right) thread with the other thread with respect to the chunks.
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.2]{"Kernels"}
+	\caption{An example of contention with nearby simultaneous kernel calculations. The purple region represents potentially contested pixels.}
+        \label{kernels}
+\end{figure}
+  
+Each thread works column by column. We do not create seperate sub images for each thread to use for source and output because it would require splitting overhead at the beginning and joining overhead at the end. It is mentioned in the EasyBMP documentation (EasyBMP Manual 1.06, pg. 16) that the RGBApixel pointers are stored internally as a 2d array. We also know that this must be stored on the heap, since it has to do deal with varying sized images (and thus, varying sized 2d arrays). Finally, we can deduce that since the size of the array is width x column that these 2d arrays store arrays of rows (the x component of the image).
 
-Suppose the threads were perfectly scheduled, i.e. whenever a thread is being executed every other thread is also being executed. Also ignoring the point in the paragraph above - the threads would all do their calculation in complete synchronization. I.e. they would all work on pixels in the same row but in differnet columns at the same time before progressing to the next row, etc. So the row is in sync.
+So what about the contention that arises when threads read from the same source image in memory at approximately the same time, and write to the same output image at approximately the same time. Will contention on the cache line arise from reading/writing the same row?
 
-Now suppose that the pixels are stored row first - i.e. one thread would have to wait for the other thread to finish storing it's pixel before it can store it's own pixel. Then the two threads will become desynced with respect to that row in the image. But if the two threads now continue to do their calculations, they will not likely run into that contention again because they will be likely operating on seperate rows at each step from then on (they will, by design, be operating on different columns).
+We compared two version of the parallel implementation - one which sequentially accessed by row and one which sequentially accessed by column. The difference in execution time was negligible.
 
-Thus, although initial contention here is quite possible, it will not likely be a recurring issue as a result of the threads being continually desynced from another with respect to row and column in the image. Note that rows may become resynced (briefly) during the execution of the program as a result of some rows already being in shared cache due to leading threads having fetched them for their calculation - the leading thread will be slowed down as a result of having to be the thread that fetches the rows from RAM all the time and the other threads will catch up. This is obviously hardware dependent.
+Why is this? We believe it is because the 2d array stores pixel POINTERS.
 
-If infact the image is stored column first however, then there really is no source of contention here at all since each thread is only accessed and written to by one thread at a time. Infact, since the threads work column by column, this could very well result in whole columns being in cache for each thread, thus reducing waiting time for tht columns processing and the image as a whole.
+Suppose there is contention between 2 threads trying to access far away pixels on the same row, and - we shall presume for argument's sake - the same cache line. Then one thread will have to wait while the other gets the pointer data (which is of size int). But after that contention, mofiying or reading to that RGBApixel - which forms the vast bulk of the process of modifying a pixel - will be independent of modifyng or reading any other RGBApixel, since it is a pointer and can exist anywhere in the heap and thus on seperate cache lines.
 
-In any case, there IS a marked speed improvement with our parallel implementation as will be seen momentarily.
+So since the delay caused by the contention is so small, it has an almost zero sum effect on the toal execution time. The number of contentions also becomes less over time, as once a contention does arise, one of the threads will move forward while another has to wait. So ultimately, the threads will often be working on both different rows and different columns anyway.
 \section{Results analysis}
 
 \section{Conclusion}
