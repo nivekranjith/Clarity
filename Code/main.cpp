@@ -11,8 +11,8 @@ int main( int argc, char* argv[] )
 { 
 	double start,end;
 	double time;
-	//Loop 5 times
-	int loop=2; 
+	//Loop 10 times for accuracy
+	int loop=10; 
 	//Do Parallel
 	if(*argv[3]=='p' || *argv[3]=='P') {
 
