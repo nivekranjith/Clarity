@@ -11,7 +11,7 @@ int main( int argc, char* argv[] )
   Background->ReadFromFile(argv[1]); 
 
   Matrix* mat = Kernels::genMatrix(5,"gaussian_blur");
-  BMP* Output = Matrix::convolution(mat,Background);
+  BMP* Output = Matrix::convolution_parallel(mat,Background,4);
   delete mat;
     
   Output->WriteToFile(argv[2]);
