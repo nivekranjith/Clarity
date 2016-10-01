@@ -11,7 +11,8 @@ int main( int argc, char* argv[] )
 { 
 	double start,end;
 	double time;
-	int loop=10;
+	//Loop 5 times
+	int loop=5; 
 	//Do Parallel
 	if(*argv[3]=='p' || *argv[3]=='P') {
 
@@ -28,7 +29,7 @@ int main( int argc, char* argv[] )
 			end = omp_get_wtime();
 
 			time +=(end-start);
-			//cout<<i <<" : "<<time <<"(+"<<end-start<<")"<<endl;
+			cout<<i <<" : "<<time <<"(+"<<end-start<<")"<<endl;
 		}
 
 		
@@ -36,7 +37,7 @@ int main( int argc, char* argv[] )
 		delete mat;
 		  
 		Output->WriteToFile(argv[2]);
-		cout<<"Exection Time (Parallel) : "<<(time/10)<<endl;
+		cout<<"Exection Time (Parallel) : "<<(time/loop)<<endl;
 
 	}
 	//Do Serial
@@ -55,7 +56,7 @@ int main( int argc, char* argv[] )
 			end = omp_get_wtime();
 
 			time+=(end-start);
-			//cout<<i <<" : "<<time <<"(+"<<end-start<<")"<<endl;
+			cout<<i <<" : "<<time <<"(+"<<end-start<<")"<<endl;
 		}
 
 
