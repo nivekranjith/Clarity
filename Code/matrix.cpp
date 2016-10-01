@@ -140,14 +140,21 @@ BMP* Matrix::convolution_parallel(Matrix* matrix, BMP* source, int n) {
   omp_set_num_threads(n);
 #pragma omp parallel for schedule(dynamic,1), private(k,i,max), firstprivate(tempmat,width,div,picWidth), shared(source,output)
   for (j=0; j<picWidth/(width*2); j++) {
-    if ((j+1)*width*2>picWidth) max = picWidth;
-    else max = (j+1)*width*2;
+    //if ((j+1)*width*2<picWidth) max = picWidth;
+    /*else*/ max = (j+1)*width*2;
     for (i=j*width*2; i<max; i++) {
     //j=((i%n)*(picWidth/n))+(i/n);
       for (k=0; k<picHeight; k++) {
 	//if (k==0) printf("hi %d\n",i);
 	kernel2(tempmat,div,width,source,output,i,k);
       }
+    }
+  }
+  /* Do the small remainder of the image on the right */
+  for (j=(picWidth/(width*2))*(width*2); j<picWidth; j++) {
+    for (k=0; k<picHeight; k++) {
+	//if (k==0) printf("hi %d\n",i);
+      kernel2(tempmat,div,width,source,output,j,k);
     }
   }
 

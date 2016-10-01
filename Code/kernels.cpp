@@ -50,12 +50,12 @@ Matrix* Kernels::genMatrix(int size, std::string type) {
       kern[4][0] = 1; kern[4][1] = 4; kern[4][2] = 6; kern[4][3] = 4; kern[4][4] = 1;
     }
     if (type=="gaussian_blur2") {
-      divisor=256;
-      kern[0][0] = 1; kern[0][1] = 4; kern[0][2] = 6; kern[0][3] = 4; kern[0][4] = 1;
-      kern[1][0] = 4; kern[1][1] = 16; kern[1][2] = 24; kern[1][3] = 16; kern[1][4] = 4;
-      kern[2][0] = 6; kern[2][1] = 24; kern[2][2] = 36; kern[2][3] = 24; kern[2][4] = 6;
-      kern[3][0] = 4; kern[1][1] = 16; kern[3][2] = 24; kern[1][3] = 16; kern[3][4] = 4;
-      kern[4][0] = 1; kern[4][1] = 4; kern[4][2] = 6; kern[4][3] = 4; kern[4][4] = 1;
+      divisor=273;
+      kern[0][0] = 1; kern[0][1] = 4; kern[0][2] = 7; kern[0][3] = 4; kern[0][4] = 1;
+      kern[1][0] = 4; kern[1][1] = 16; kern[1][2] = 26; kern[1][3] = 16; kern[1][4] = 4;
+      kern[2][0] = 7; kern[2][1] = 26; kern[2][2] = 41; kern[2][3] = 26; kern[2][4] = 7;
+      kern[3][0] = 4; kern[1][1] = 16; kern[3][2] = 26; kern[1][3] = 16; kern[3][4] = 4;
+      kern[4][0] = 1; kern[4][1] = 4; kern[4][2] = 7; kern[4][3] = 4; kern[4][4] = 1;
     }
     if (type=="box_blur") {
       divisor=25;
