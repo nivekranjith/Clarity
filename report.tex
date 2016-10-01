@@ -63,7 +63,8 @@
 \horrule{2pt} \\[0.5cm] % Thick bottom horizontal rule
 }
 
-\author{Liam Pulles} % Your name
+\author{Liam Pulles\\
+		Jadon Manilall - 815050} % Your name
 
 \date{\normalsize September 30, 2016} % Today's date or a custom date
 
@@ -139,12 +140,24 @@ So since the delay caused by the contention is so small, it has an almost zero s
 	
 \end{itemize}
 
+\subsection{About the Hardware}
+
+\begin{itemize}
+\item{Core i5 4670k \\}
+\item{3.4 Ghz \\}
+\item{Quad Core \\}
+\end{itemize}
+
+
+
+
 \subsection{Analysis}
 The following results were obtained by using a 5x5 Gaussian blur kernal matrix on the image set stored in TestBMP.\\
 Each .bmp image has a resoloution of 2560x1440 px resulting in a size of 11.1Mb per image. Now, Because of this large resoloution each image was processed 10 times and the average of that processing time was recoreded to promote more accurate results.\\
 
 
-However, here we should note that all code for testing ( controll for loops) have been removed for the final submission.\\
+We should also note that the time taken to read from and write to files have been excluded.\\
+
 
 The following table illustrates the parallel and serial processing time for each image.\\
 
@@ -155,16 +168,16 @@ The following table illustrates the parallel and serial processing time for each
 \textbf{Image Used} & \textbf{Serial Time(S)} & \textbf{Parallel Time(S)} & \textbf{Difference(S)} \\[0.5ex]
 \hline \hline
 
-1.bmp & 5.31379 & 5.13833 & 0.17546 \\
-2.bmp & 5.45032 & 5.11123 & 0.33909\\
-3.bmp & 5.84925 & 5.46885 & 0.3804\\
-4.bmp & 5.22041 & 5.20856 & 0.01185\\
-5.bmp & 5.20246 & 5.13382 & 0.06864\\
-6.bmp & 5.20605 & 5.11949 & 0.08656\\
-7.bmp & 5.23101 & 5.08228 & 0.14873\\
-8.bmp & 5.20282 & 5.1518  & 0.05102\\
-9.bmp & 5.21546 & 5.1153  & 0.10016\\
-10.bmp & 5.18062 & 5.11094 & 0.06968\\[1ex]
+1.bmp & 3.69834 & 1.03163 & 2.66671 \\
+2.bmp & 3.67825 & 1.02016 & 2.65809\\
+3.bmp & 3.68039 & 1.02509 & 2.6553\\
+4.bmp & 3.68526 & 1.03562 & 2.64964\\
+5.bmp & 3.66079 & 1.03453 & 2.62626\\
+6.bmp & 3.67016 & 1.0301 & 2.64006\\
+7.bmp & 3.678 & 1.03763 & 2.64037\\
+8.bmp & 3.68696 & 1.03739  & 2.64957\\
+9.bmp & 3.67905 & 1.03905 & 2.64\\
+10.bmp & 3.67905 & 1.09719 & 2.58186\\[1ex]
 
 \hline
 
@@ -172,24 +185,50 @@ The following table illustrates the parallel and serial processing time for each
 
 \end{center}
 
-Using the above table we can see that on average our parallel implentation lowers our processing time by 0.143159 seconds.\\
+Using the above table we can see that on average our parallel implentation lowers our processing time by 2.640786 seconds.\\
+
+Moreover, If we denote the average serial time by \textbf{Ts} and denote the average parallel time by \textbf{Tp}, where \\
+\textbf{Ts} = 3.679625 and \\
+\textbf{Tp} = 1.038839 \\
+We can caluclate the Average Speed Up$(S_a)$ for our solution by using the formula
+\begin{equation}
+\begin{split}
+S_a &= \frac{Ts}{Tp}  \\
+	&=\frac{3.679625}{1.038839}  \\
+	&=3.5420551
+\end{split}
+\end{equation}\\
+More over, We can calculate our effeicency(E) using 
+\begin{equation}
+\begin{split}
+E &= \frac{S_a}{p}
+\end{split}
+\end{equation}\\
+Here, p represents the number of processing elements involved. In our case, We've used p = 4, Since 4 processors is optimal for current hardware situation\\
+Hence the Above becomes,
+
+\begin{equation}
+\begin{split}
+E &= \frac{3.5420551}{4}\\
+	&= 0.885514
+\end{split}
+\end{equation}
+
+
 The reason for this increase in performance is explaned in section 2.2\\
-
-
-
 
 The following diagram is a graph which represents the above table in a visual way...\\
 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[scale=0.5]{"graph1"}
+	\includegraphics[scale=0.5]{"graph2"}
 	\caption{Serial Vs Parallel (Lower is better)}
         \label{graph1}
 \end{figure}
 
 
-Here, using the above graph it becomes easier to see that our parallel implemtation out performs our serial implentation everytime.
+Here, using the above graph it becomes easier to see that our parallel implemtation greatly out performs our serial implentation everytime.
 
 
 
