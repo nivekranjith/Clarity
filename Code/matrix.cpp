@@ -1,7 +1,14 @@
+/*
+ * See matrix.h for the class header.
+ * A high level description of how these functions work is given in
+ * section 2 of the report.
+ */
 #include "EasyBMP/EasyBMP.h"
 #include "matrix.h"
 #include <omp.h>
 
+/* Constructor for the matrix class. */
+/* mat is on the heap. */
 Matrix::Matrix(int **matrix_in, int wid, int hei, int div) {
   mat = matrix_in;
   width = wid;
@@ -9,6 +16,7 @@ Matrix::Matrix(int **matrix_in, int wid, int hei, int div) {
   divisor = div;
 }
 
+/* Destructor for the matrix class. */
 Matrix::~Matrix() {
   for (int i=0; i<width; i++) {
     delete mat[i];
@@ -16,14 +24,9 @@ Matrix::~Matrix() {
   delete mat;
 }
 
-//From Mark Ransom at http://codereview.stackexchange.com/questions/6502/fastest-way-to-clamp-an-integer-to-the-range-0-255
-inline
-int fastClamp(int n)
-{
-    n &= -(n >= 0);
-    return n | ((255 - n) >> 31);
-}
-
+/* Kernel function for use with the parallel convolution function */
+/* The important difference is mat, who has max width 7, width adn div. */
+/* Basically we have avoided passing in the Matrix object as a whole. */
 void Matrix::kernel2(int mat[][7], int div, int width, BMP* source, BMP* output, int x, int y) {
   //Need to use temporary variables because result of kernel may exceed 255 or go below 0.
   int Red = 0;
@@ -38,13 +41,14 @@ void Matrix::kernel2(int mat[][7], int div, int width, BMP* source, BMP* output,
     }
   }
 
+  //EasyBMP will automatically clamp these values to the range 0-255, if neccesary.
   (*output)(x,y)->Red = Red/div; //divide by divisor
   (*output)(x,y)->Blue = Blue/div;
   (*output)(x,y)->Green = Green/div;
 }
 
-RGBApixel* Matrix::kernel(Matrix* matrix, BMP* source, int x, int y) {
-  RGBApixel* out = new RGBApixel();
+/* Kernel function for use with the serial covolution function. */
+void Matrix::kernel1(Matrix* matrix, BMP* source, BMP* output, int x, int y) {
   //Need to use temporary variables because result of kernel may exceed 255 or go below 0.
   int Red = 0;
   int Green = 0;
@@ -58,37 +62,13 @@ RGBApixel* Matrix::kernel(Matrix* matrix, BMP* source, int x, int y) {
     }
   }
 
-  out->Red = fastClamp(Red/matrix->divisor); //divide by divisor
-  out->Blue = fastClamp(Blue/matrix->divisor);
-  out->Green = fastClamp(Green/matrix->divisor);
-  //Dummy for now
-  out ;
+  //EasyBMP will automatically clamp these values to the range 0-255, if neccesary.
+  (*output)(x,y)->Red = Red/matrix->divisor; //divide by divisor
+  (*output)(x,y)->Blue = Blue/matrix->divisor;
+  (*output)(x,y)->Green = Green/matrix->divisor;
 }
 
-void Matrix::kernel3(Matrix* matrix, BMP* source, BMP* output, int x, int y) {
-  //Need to use temporary variables because result of kernel may exceed 255 or go below 0.
-  int Red = 0;
-  int Green = 0;
-  int Blue = 0;
-  int border = (matrix->width-1)/2;
-  for(int i = -border; i<=border; i++) {
-    for(int j = -border; j<=border; j++) {
-      Red = Red + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Red * matrix->mat[i+border][j+border];
-      Blue = Blue + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Blue * matrix->mat[i+border][j+border];
-      Green = Green + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Green * matrix->mat[i+border][j+border];
-    }
-  }
-
-  (*output)(x,y)->Red = fastClamp(Red/matrix->divisor); //divide by divisor
-  (*output)(x,y)->Blue = fastClamp(Blue/matrix->divisor);
-  (*output)(x,y)->Green = fastClamp(Green/matrix->divisor);
-}
-
-void Matrix::edge_extrapolate_source(BMP* source) {}
-
-//Liam says: I changed output to be a pointer to match definition
-//If we return a normal BMP then it will have to clone the whole image
-//Better to just pass a reference which is quick, no?
+/* Serial version of the convolution function. */
 BMP* Matrix::convolution(Matrix* matrix, BMP* source) {
   //Make output canvas
   BMP* output = new BMP();
@@ -105,17 +85,16 @@ BMP* Matrix::convolution(Matrix* matrix, BMP* source) {
    {
      for (int j = 0; j < picHeight; ++j) 
      { 
-        kernel3(matrix,source,output,i,j);
+        kernel1(matrix,source,output,i,j);
      } 
-   } //end for
+   }
  
     //Return the final BMP
 
    return output;
-   //Output.WriteToFile("output.BMP"); 
-
 }
 
+/* Parallel version of the convolution function  */
 BMP* Matrix::convolution_parallel(Matrix* matrix, BMP* source, int n) {
   int tempmat[7][7];
   for (int l=0; l<matrix->width; l++) {
@@ -134,34 +113,30 @@ BMP* Matrix::convolution_parallel(Matrix* matrix, BMP* source, int n) {
   //set outputs bit depth to 24 since we're using RGB 8bit+8bit+8bit=24bit
   output->SetBitDepth(24);
 
-  int i, j, k, max;
+  int i, j, k;
   int width = matrix->width;
   int div = matrix->divisor;
   omp_set_num_threads(n);
-#pragma omp parallel for schedule(dynamic,1), private(k,i,max), firstprivate(tempmat,width,div,picWidth), shared(source,output)
+#pragma omp parallel for schedule(dynamic,1), private(k,i), firstprivate(tempmat,width,div,picWidth), shared(source,output)
   for (j=0; j<picWidth/(width*2); j++) {
-    //if ((j+1)*width*2<picWidth) max = picWidth;
-    /*else*/ max = (j+1)*width*2;
-    for (i=j*width*2; i<max; i++) {
-    //j=((i%n)*(picWidth/n))+(i/n);
+    for (i=j*width*2; i<(j+1)*width*2; i++) {
       for (k=0; k<picHeight; k++) {
-	//if (k==0) printf("hi %d\n",i);
 	kernel2(tempmat,div,width,source,output,i,k);
       }
     }
   }
-  /* Do the small remainder of the image on the right */
+  
+  /* Do the remainder of the image on the right */
   for (j=(picWidth/(width*2))*(width*2); j<picWidth; j++) {
     for (k=0; k<picHeight; k++) {
-	//if (k==0) printf("hi %d\n",i);
       kernel2(tempmat,div,width,source,output,j,k);
     }
   }
 
   return output;
-  //Output.WriteToFile("output.BMP"); 
 }
 
+/* Edge extrapolation function */
 RGBApixel* Matrix::edge_extrapolate_pixel(BMP* source, int x, int y) {
   if ((x>=0)&&(x<source->TellWidth())&&(y>=0)&&(y<source->TellHeight())) {
     return (*source)(x,y);
@@ -201,5 +176,6 @@ RGBApixel* Matrix::edge_extrapolate_pixel(BMP* source, int x, int y) {
     //Can only be on the bottom somewhere
     return (*source)(x,source->TellHeight()-1);
   }
+  //Should not be reached.
   return nullptr;
 }

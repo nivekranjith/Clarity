@@ -1,11 +1,16 @@
+/*
+ * See kernels.h for the class header.
+ */
+
 #include "kernels.h"
 #include "matrix.h"
 #include <string.h>
 
 Kernels::Kernels() {}
-
+/* Generate a kernel matric object. */
 Matrix* Kernels::genMatrix(int size, std::string type) {
   int divisor;
+  // Make a blank square 2d array.
   int** kern = new int*[size];
   for(int i=0; i < size; ++i) {
     kern[i] = new int[size];
@@ -14,6 +19,7 @@ Matrix* Kernels::genMatrix(int size, std::string type) {
     }
   }
 
+  //Names are self explanatory really.
   if (size==3) {
     if (type=="box_blur") {
       divisor=9;
@@ -41,6 +47,7 @@ Matrix* Kernels::genMatrix(int size, std::string type) {
     }
   }
   if (size==5) {
+    //This is the one we used for our report.
     if (type=="gaussian_blur") {
       divisor=256;
       kern[0][0] = 1; kern[0][1] = 4; kern[0][2] = 6; kern[0][3] = 4; kern[0][4] = 1;

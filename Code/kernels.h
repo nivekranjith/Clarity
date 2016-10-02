@@ -1,3 +1,8 @@
+/*
+ * This header describes the kernel class.
+ * The kernel class is used to easily generate various kernel matrices.
+ */
+
 #ifndef KERNELS_H
 #define KERNELS_H
 

@@ -1,4 +1,6 @@
-
+/*
+ * This file contains the main() function which is executed.
+ */
 #include "EasyBMP/EasyBMP.h"
 #include "matrix.h"
 #include "kernels.h"
@@ -6,7 +8,8 @@
 #include <string.h>
 using namespace std;
 
-//Note that BMP's apparently automatically delete.
+//Note that BMP* deletes itself.
+//Arguments to the executable are described in section 3 of the report.
 int main( int argc, char* argv[] ) 
 { 
 	double start,end;
@@ -32,8 +35,6 @@ int main( int argc, char* argv[] )
 			cout<<i <<" : "<<time <<"(+"<<end-start<<")"<<endl;
 		}
 
-		
-
 		delete mat;
 		  
 		Output->WriteToFile(argv[2]);
@@ -58,8 +59,6 @@ int main( int argc, char* argv[] )
 			time+=(end-start);
 			cout<<i <<" : "<<time <<"(+"<<end-start<<")"<<endl;
 		}
-
-
 
 		delete mat;
 		  
