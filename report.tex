@@ -63,7 +63,8 @@
 \horrule{2pt} \\[0.5cm] % Thick bottom horizontal rule
 }
 
-\author{Liam Pulles} % Your name
+\author{Liam Pulles\\
+		Jadon Manilall - 815050} % Your name
 
 \date{\normalsize September 30, 2016} % Today's date or a custom date
 
@@ -122,10 +123,118 @@ We compared two version of the parallel implementation - one which sequentially 
 
 Why is this? We believe it is because the 2d array stores pixel POINTERS.
 
-Suppose there is contention between 2 threads trying to access far away pixels on the same row, and - we shall presume for argument's sake - the same cache line. Then one thread will have to wait while the other gets the pointer data (which is of size int). But after that contention, mofiying or reading to that RGBApixel - which forms the vast bulk of the process of modifying a pixel - will be independent of modifyng or reading any other RGBApixel, since it is a pointer and can exist anywhere in the heap and thus on seperate cache lines.
+Suppose there is contention between 2 threads trying to access far away pixels on the same row, and - we shall presume for argument's sake - the same cache line. Then one thread will have to wait while the other gets their pixel pointer (which is of size int). But after that contention, mofiying or reading to that RGBApixel - which forms the vast bulk of the process of modifying a pixel - will be independent of modifyng or reading any other RGBApixel, since it is a pointer and can exist anywhere in the heap and thus on seperate cache lines. (Note that this process includes getting the actual seperate R,G,B components of the RGBApixel from memory)
 
-So since the delay caused by the contention is so small, it has an almost zero sum effect on the toal execution time. The number of contentions also becomes less over time, as once a contention does arise, one of the threads will move forward while another has to wait. So ultimately, the threads will often be working on both different rows and different columns anyway.
+So since the delay caused by the contention is so small, it has an almost zero sum effect on the total execution time. The number of contentions also becomes less over time, as once a contention does arise, one of the threads will move forward while another has to wait and the threads will then both move forward in this synchronisation. So ultimately, the threads will often be working on both different rows and different columns anyway.
+
+
 \section{Results analysis}
+
+\subsection{About the code}
+\begin{itemize}
+
+\item \textbf{To compile}  : make
+\item \textbf{To Run}
+	\subitem Serial Version : ./main source.bmp output.bmp \textbf{s} \\  
+	\subitem Parallel Version : ./main source.bmp output.bmp \textbf{p} \\
+	
+\end{itemize}
+
+\subsection{About the Hardware}
+
+\begin{itemize}
+\item{Core i5 4670k \\}
+\item{3.4 Ghz \\}
+\item{Quad Core \\}
+\end{itemize}
+
+
+
+
+\subsection{Analysis}
+The following results were obtained by using a 5x5 Gaussian blur kernal matrix on the image set stored in TestBMP.\\
+Each .bmp image has a resoloution of 2560x1440 px resulting in a size of 11.1Mb per image. Now, Because of this large resoloution each image was processed 10 times and the average of that processing time was recoreded to promote more accurate results.\\
+
+
+We should also note that the time taken to read from and write to files have been excluded.
+
+The following table illustrates the parallel and serial processing time for each image.\\
+
+\begin{center}
+
+\begin{tabular}{||c |c |c |c ||}
+\hline
+\textbf{Image Used} & \textbf{Serial Time(S)} & \textbf{Parallel Time(S)} & \textbf{Difference(S)} \\[0.5ex]
+\hline \hline
+
+1.bmp & 3.69834 & 1.03163 & 2.66671 \\
+2.bmp & 3.67825 & 1.02016 & 2.65809\\
+3.bmp & 3.68039 & 1.02509 & 2.6553\\
+4.bmp & 3.68526 & 1.03562 & 2.64964\\
+5.bmp & 3.66079 & 1.03453 & 2.62626\\
+6.bmp & 3.67016 & 1.0301 & 2.64006\\
+7.bmp & 3.678 & 1.03763 & 2.64037\\
+8.bmp & 3.68696 & 1.03739  & 2.64957\\
+9.bmp & 3.67905 & 1.03905 & 2.64\\
+10.bmp & 3.67905 & 1.09719 & 2.58186\\[1ex]
+
+\hline
+
+\end{tabular}
+
+\end{center}
+
+Using the above table we can see that on average our parallel implentation lowers our processing time by 2.640786 seconds.\\
+
+Moreover, If we denote the average serial time by \textbf{Ts} and denote the average parallel time by \textbf{Tp}, where \\
+\textbf{Ts} = 3.679625 and \\
+\textbf{Tp} = 1.038839 \\
+We can caluclate the Average Speed Up$(S_a)$ for our solution by using the formula
+\begin{equation}
+\begin{split}
+S_a &= \frac{Ts}{Tp}  \\
+	&=\frac{3.679625}{1.038839}  \\
+	&=3.5420551
+\end{split}
+\end{equation}\\
+More over, We can calculate our effeicency(E) using 
+\begin{equation}
+\begin{split}
+E &= \frac{S_a}{p}
+\end{split}
+\end{equation}\\
+Here, p represents the number of processing elements involved. In our case, We've used p = 4, Since 4 processors is optimal for current hardware situation\\
+Hence the Above becomes,
+
+\begin{equation}
+\begin{split}
+E &= \frac{3.5420551}{4}\\
+	&= 0.885514
+\end{split}
+\end{equation}
+
+
+The reason for this increase in performance is explaned in section 2.2\\
+
+The following diagram is a graph which represents the above table in a visual way...\\
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.5]{"graph2"}
+	\caption{Serial Vs Parallel (Lower is better)}
+        \label{graph1}
+\end{figure}
+
+
+Here, using the above graph it becomes easier to see that our parallel implemtation greatly out performs our serial implentation everytime.
+
+
+
+
+
+
+
 
 \section{Conclusion}
 
