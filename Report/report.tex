@@ -255,6 +255,7 @@ Each .bmp image has a resolution of 2560x1440 px resulting in a size of 11.1Mb p
 We should also note that the time taken to read from and write to files have been excluded.
 
 
+\subsubsection{Serial vs. Parallel (4 threads) on 10 images}
 The following table illustrates the parallel and serial processing time for each image.
 
 \begin{center}
@@ -324,8 +325,18 @@ The following diagram is a graph which represents the above table in a visual wa
         \label{graph1}
 \end{figure}
 
+\subsubsection{Serial vs. Parallel with 1-23 threads}
 
-Here, using the above graph it becomes easier to see that our parallel implementation greatly out performs our serial implementation every time.
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.5]{"threads"}
+	\caption{Graph displaying the effect of various amounts of threads.
+                 Note: 0 threads represents the serial implementation.}
+        \label{threads}
+\end{figure}
+
+Here, using the above graph it becomes easy to see that our parallel implementation greatly out performs our serial implementation every time.
+
 \section{Conclusion}
 From the analysis it is clear that the parallel version of this particular image processing project is much more efficient than that of the serial version. This is due to the parallel version iterating through multiple pixels at the same time as opposed to one pixel at a time.
 
