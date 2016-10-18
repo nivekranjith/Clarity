@@ -226,26 +226,63 @@ So since the delay caused by the contention is so small, it has an insignificant
 
 \section{Results analysis}
 
+\subsection{Data Decomposition Graph}
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.5]{"Task decompostion1"}
+	\caption{Splitting of the data}
+        \label{kernels}
+\end{figure}
+
+For more explanation see the chunks image above.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.5]{"Data decomp2"}
+	\caption{Data decomposition graph}
+        \label{kernels}
+\end{figure}
+
+\subsection{Task Dependency Graph}
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.5]{"td2"}
+	\caption{Data decomposition graph}
+        \label{kernels}
+\end{figure}
+
+\begin{itemize}
+\item T1 = Create Kernel Matrix
+\item T2 = Load Image
+\item T3 = Image Covolution (start)
+\item T4 - Tn = Kernel Multiplication
+\item Ta = Image Convolution Return
+\item Tb = Save Image
+\end{itemize}
+
 \subsection{About the code}
 \begin{itemize}
 
 \item \textbf{To compile}  : make
 \item \textbf{To Run}
-	\subitem Serial Version : ./main source.bmp output.bmp \textbf{s}  
-	\subitem Parallel Version : ./main source.bmp output.bmp \textbf{p}
-	
+	\subitem ./main source.bmp output.bmp < s | p > < simple | thread | images >\textbf{s}  
 \end{itemize}
+S or p determines whether the parallel or serial version is used (not used for thread test). simple, thread, image determines whether the program is simply run (simple) - thread makes the program run the thread test, images makes the program run the image test.
+
 
 \subsection{About the Hardware}
 
+Our 4 core machine:
 \begin{itemize}
-\item{Core i5 4670k}
-\item{3.4 GHz}
+\item{3.8 GHz}
 \item{Quad Core}
 \end{itemize}
 
-
-
+Our 8 core machine:
+\begin{itemize}
+\item{3.8 GHz}
+\item{8 Cores}
+\end{itemize}
 
 \subsection{Analysis}
 The following results were obtained by using a 5x5 Gaussian blur kernel matrix on the image set stored in TestBMP.
@@ -325,7 +362,7 @@ The following diagram is a graph which represents the above table in a visual wa
         \label{graph1}
 \end{figure}
 
-\subsubsection{Serial vs. Parallel with 1-23 threads}
+\subsubsection{Serial vs. Parallel with 1-23 threads on 4 core and 8 core computers.}
 
 \begin{figure}[H]
 	\centering
