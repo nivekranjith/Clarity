@@ -18,8 +18,7 @@ class Matrix {
   int** mat;
   int divisor;
 
-  static void kernel1(Matrix* matrix, BMP* source, BMP* output, int x, int y);
-  static void kernel2(int mat[][7], int div, int width, BMP* source, BMP* output, int x, int y);
+  static void kernel(int mat[][7], int div, int width, BMP* source, BMP* output, int x, int y);
   static BMP* convolution_parallel(Matrix* matrix, BMP* source, int n);
   static BMP* convolution(Matrix* matrix, BMP* source);
   static RGBApixel* edge_extrapolate_pixel(BMP* source, int x, int y);

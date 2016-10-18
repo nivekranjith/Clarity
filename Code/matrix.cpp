@@ -8,7 +8,7 @@
 #include <omp.h>
 
 /* Constructor for the matrix class. */
-/* mat is on the heap. */
+/* matrix_in is on the heap. */
 Matrix::Matrix(int **matrix_in, int wid, int hei, int div) {
   mat = matrix_in;
   width = wid;
@@ -24,10 +24,9 @@ Matrix::~Matrix() {
   delete mat;
 }
 
-/* Kernel function for use with the parallel convolution function */
-/* The important difference is mat, who has max width 7, width adn div. */
-/* Basically we have avoided passing in the Matrix object as a whole. */
-void Matrix::kernel2(int mat[][7], int div, int width, BMP* source, BMP* output, int x, int y) {
+/* Kernel function */
+/* Basically we have avoided passing in the Matrix object as a whole by passing in the matrix, div, width*/
+void Matrix::kernel(int mat[][7], int div, int width, BMP* source, BMP* output, int x, int y) {
   //Need to use temporary variables because result of kernel may exceed 255 or go below 0.
   int Red = 0;
   int Green = 0;
@@ -47,32 +46,21 @@ void Matrix::kernel2(int mat[][7], int div, int width, BMP* source, BMP* output,
   (*output)(x,y)->Green = Green/div;
 }
 
-/* Kernel function for use with the serial covolution function. */
-void Matrix::kernel1(Matrix* matrix, BMP* source, BMP* output, int x, int y) {
-  //Need to use temporary variables because result of kernel may exceed 255 or go below 0.
-  int Red = 0;
-  int Green = 0;
-  int Blue = 0;
-  int border = (matrix->width-1)/2;
-  for(int i = -border; i<=border; i++) {
-    for(int j = -border; j<=border; j++) {
-      Red = Red + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Red * matrix->mat[i+border][j+border];
-      Blue = Blue + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Blue * matrix->mat[i+border][j+border];
-      Green = Green + Matrix::edge_extrapolate_pixel(source,x+i,y+j)->Green * matrix->mat[i+border][j+border];
-    }
-  }
-
-  //EasyBMP will automatically clamp these values to the range 0-255, if neccesary.
-  (*output)(x,y)->Red = Red/matrix->divisor; //divide by divisor
-  (*output)(x,y)->Blue = Blue/matrix->divisor;
-  (*output)(x,y)->Green = Green/matrix->divisor;
-}
-
 /* Serial version of the convolution function. */
 BMP* Matrix::convolution(Matrix* matrix, BMP* source) {
   //Make output canvas
   BMP* output = new BMP();
 
+  int tempmat[7][7];
+  for (int l=0; l<matrix->width; l++) {
+    for (int o=0; o<matrix->height; o++) {
+      tempmat[l][o] = matrix->mat[l][o];
+    }
+  }
+  int width = matrix->width;
+  int div = matrix->divisor;
+
+  
   //Get dimensions fom source
   int picWidth = source->TellWidth(); 
   int picHeight = source->TellHeight(); 
@@ -85,7 +73,7 @@ BMP* Matrix::convolution(Matrix* matrix, BMP* source) {
    {
      for (int j = 0; j < picHeight; ++j) 
      { 
-        kernel1(matrix,source,output,i,j);
+       kernel(tempmat,div,width,source,output,i,j);
      } 
    }
  
@@ -102,6 +90,9 @@ BMP* Matrix::convolution_parallel(Matrix* matrix, BMP* source, int n) {
       tempmat[l][o] = matrix->mat[l][o];
     }
   }
+  int width = matrix->width;
+  int div = matrix->divisor;
+  
   //Make output canvas
   BMP* output = new BMP();
 
@@ -114,14 +105,12 @@ BMP* Matrix::convolution_parallel(Matrix* matrix, BMP* source, int n) {
   output->SetBitDepth(24);
 
   int i, j, k;
-  int width = matrix->width;
-  int div = matrix->divisor;
   omp_set_num_threads(n);
 #pragma omp parallel for schedule(dynamic,1), private(k,i), firstprivate(tempmat,width,div,picWidth), shared(source,output)
   for (j=0; j<picWidth/(width*2); j++) {
     for (i=j*width*2; i<(j+1)*width*2; i++) {
       for (k=0; k<picHeight; k++) {
-	kernel2(tempmat,div,width,source,output,i,k);
+	kernel(tempmat,div,width,source,output,i,k);
       }
     }
   }
@@ -129,7 +118,7 @@ BMP* Matrix::convolution_parallel(Matrix* matrix, BMP* source, int n) {
   /* Do the remainder of the image on the right */
   for (j=(picWidth/(width*2))*(width*2); j<picWidth; j++) {
     for (k=0; k<picHeight; k++) {
-      kernel2(tempmat,div,width,source,output,j,k);
+      kernel(tempmat,div,width,source,output,j,k);
     }
   }
 

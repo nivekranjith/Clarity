@@ -145,31 +145,23 @@ int simple( int argc, char* argv[] )
 // 3: parallel or serial
 // 4: Choice between 2 tests or straight run.
 int main( int argc, char* argv[] ) 
-{ 
-  string argv3(argv[3]);
-  if (argc==4) {
-    if (argv3=="thread") {
-      return thread_test(argc,argv);
-    }
-    else {
-      cout<<"To use 3 arguments only the 3rd argument must be \"thread\" (without quotes).\n3rd argument is \""<<argv3<<"\"\n";
-    }
+{
+  if (argc != 5) {
+    printf("Number of arguments must be 4.\n");
+    return 1;
+  }
+  string argv4 = argv[4];
+  if (argv4=="thread") {
+    return thread_test(argc,argv);
+  }
+  if (argv4=="simple") {
+    return simple(argc,argv);
+  }
+  else if (argv4=="images") {
+    return images_test(argc,argv);
   }
   else {
-    if (argc != 5) {
-      printf("Number of arguments must be 3 or 4.\n");
-      return 1;
-    }
-    string argv4(argv[4]);
-    if(argv4=="simple") {
-      return simple(argc,argv);
-    }
-    else if (argv4=="images") {
-      return images_test(argc,argv);
-    }
-    else {
-      printf("Argument \"%s\" (without quotes) not recognized.\n",argv[4]);
-    }
+    printf("Argument \"%s\" (without quotes) not recognized.\n",argv[4]);
   }
   return 1; 
 } 
